@@ -1,23 +1,59 @@
 
-      - name: Find and build project
+name: Build Kalam-e-Khuda iOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Show generated project
         run: |
-          xcodegen generate --spec project.yml
+          echo "Generated project files:"
+          find . -maxdepth 3 -name '*.xcodeproj' -print
+          echo "Generated schemes:"
+          xcodebuild -list -project KalamEKHUDA.xcodeproj
 
-          PROJECT_PATH="KalamEKHUDA.xcodeproj"
-
-          if [ ! -d "$PROJECT_PATH" ]; then
-            echo "ERROR: Expected project not found: $PROJECT_PATH"
-            find . -maxdepth 3 -name '*.xcodeproj' -print
-            exit 1
-          fi
-
-          xcodebuild -list -project "$PROJECT_PATH"
-
+      - name: Build iOS app
+        run: |
           xcodebuild \
-            -project "$PROJECT_PATH" \
+            -project KalamEKHUDA.xcodeproj \
             -scheme KalamEKHUDA \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Package IPA
+        run: |
+          APP_PATH="build/Build/Products/Release-iphoneos/KalamEKHUDA.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "ERROR: App bundle not found"
+            exit 1
+          fi
+
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qr KalamEKHUDA-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: KalamEKHUDA-unsigned-IPA
+          path: KalamEKHUDA-unsigned.ipa
