@@ -1,0 +1,27 @@
+
+name: Build Kalam-e-Khuda iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Xcode
+        run: xcodebuild -version
+
+      - name: List project files
+        run: find . -maxdepth 4 -type f
+
+      - name: Check for Xcode project
+        run: |
+          if ! find . -name '*.xcodeproj' -o -name '*.xcworkspace' | grep -q .; then
+            echo "No Xcode project found yet."
+            echo "The Swift source file alone is not a complete buildable iOS project."
+            exit 1
+          fi
