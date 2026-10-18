@@ -1,22 +1,23 @@
 
-name: KalamEKHUDA
+      - name: Find and build project
+        run: |
+          xcodegen generate --spec project.yml
 
-options:
-  deploymentTarget:
-    iOS: "16.0"
+          PROJECT_PATH="KalamEKHUDA.xcodeproj"
 
-targets:
-  KalamEKHUDA:
-    type: application
-    platform: iOS
-    sources:
-      - path: KalamEKHUDAApp.swift
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.zarnosh.kalamekhuda
-        PRODUCT_NAME: KalamEKHUDA
-        SWIFT_VERSION: "5.0"
-        TARGETED_DEVICE_FAMILY: "1,2"
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "Kalam-e-Khuda"
-        CODE_SIGNING_ALLOWED: NO
+          if [ ! -d "$PROJECT_PATH" ]; then
+            echo "ERROR: Expected project not found: $PROJECT_PATH"
+            find . -maxdepth 3 -name '*.xcodeproj' -print
+            exit 1
+          fi
+
+          xcodebuild -list -project "$PROJECT_PATH"
+
+          xcodebuild \
+            -project "$PROJECT_PATH" \
+            -scheme KalamEKHUDA \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
