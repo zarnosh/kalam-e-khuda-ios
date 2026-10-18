@@ -1,27 +1,56 @@
 
-name: KalamEKHUDA
+name: Build Kalam-e-Khuda iOS
 
-options:
-  bundleIdPrefix: com.zarnosh
-  deploymentTarget:
-    iOS: "16.0"
+on:
+  workflow_dispatch:
 
-targets:
-  KalamEKHUDA:
-    type: application
-    platform: iOS
+permissions:
+  contents: read
 
-    sources:
-      - KalamEKHUDAApp.swift
+jobs:
+  build:
+    runs-on: macos-15
 
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.zarnosh.kalamekhuda
-        PRODUCT_NAME: "Kalam-e-Khuda"
-        SWIFT_VERSION: "5.0"
-        TARGETED_DEVICE_FAMILY: "1,2"
-        INFOPLIST_KEY_CFBundleDisplayName: "Kalam-e-Khuda"
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        GENERATE_INFOPLIST_FILE: YES
-        CODE_SIGNING_ALLOWED: NO
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check Xcode
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build iOS app
+        run: |
+          xcodebuild \
+            -project KalamEKHUDA.xcodeproj \
+            -scheme KalamEKHUDA \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH="build/Build/Products/Release-iphoneos/KalamEKHUDA.app"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Build output not found: $APP_PATH"
+            exit 1
+          fi
+
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          /usr/bin/zip -qr KalamEKHUDA-unsigned.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KalamEKHUDA-unsigned-IPA
+          path: KalamEKHUDA-unsigned.ipa
+          if-no-files-found: error
