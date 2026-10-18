@@ -1,6 +1,28 @@
 
 name: Build Kalam-e-Khuda iOS
 
+name: KalamEKHUDA
+
+options:
+  deploymentTarget:
+    iOS: "16.0"
+
+targets:
+  KalamEKHUDA:
+    type: application
+    platform: iOS
+    sources:
+      - path: KalamEKHUDAApp.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zarnosh.kalamekhuda
+        PRODUCT_NAME: KalamEKHUDA
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "Kalam-e-Khuda"
+        CODE_SIGNING_ALLOWED: NO
+
 on:
   workflow_dispatch:
 
