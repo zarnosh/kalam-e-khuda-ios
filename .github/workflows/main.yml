@@ -1,65 +1,22 @@
 
-name: Build Kalam-e-Khuda iOS
+name: KalamEKHUDA
 
-on:
-  workflow_dispatch:
+options:
+  deploymentTarget:
+    iOS: "16.0"
 
-permissions:
-  contents: read
-
-jobs:
-  build:
-    runs-on: macos-15
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Check Xcode
-        run: xcodebuild -version
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        run: xcodegen generate --spec project.yml
-
-      - name: Find and build project
-        run: |
-          PROJECT_PATH="$(find . -name '*.xcodeproj' -print -quit)"
-
-          if [ -z "$PROJECT_PATH" ]; then
-            echo "ERROR: No Xcode project was generated"
-            exit 1
-          fi
-
-          echo "Using project: $PROJECT_PATH"
-          xcodebuild -list -project "$PROJECT_PATH"
-
-          xcodebuild \
-            -project "$PROJECT_PATH" \
-            -scheme KalamEKHUDA \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-
-      - name: Package IPA
-        run: |
-          APP_PATH="build/Build/Products/Release-iphoneos/KalamEKHUDA.app"
-
-          if [ ! -d "$APP_PATH" ]; then
-            echo "ERROR: App bundle not found"
-            exit 1
-          fi
-
-          mkdir -p Payload
-          cp -R "$APP_PATH" Payload/
-          zip -qr KalamEKHUDA-unsigned.ipa Payload
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: KalamEKHUDA-unsigned-IPA
-          path: KalamEKHUDA-unsigned.ipa
+targets:
+  KalamEKHUDA:
+    type: application
+    platform: iOS
+    sources:
+      - path: KalamEKHUDAApp.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zarnosh.kalamekhuda
+        PRODUCT_NAME: KalamEKHUDA
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "Kalam-e-Khuda"
+        CODE_SIGNING_ALLOWED: NO
